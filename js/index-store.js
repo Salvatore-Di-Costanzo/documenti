@@ -54,3 +54,60 @@ async function appendToIndex(entry, rootFolderId) {
   entries.push(entry);
   await writeIndex(entries, fileId, rootFolderId);
 }
+
+// Aggiunge deleted_at all'entry (soft delete)
+async function softDeleteEntry(id, rootFolderId) {
+  const { entries, fileId } = await readIndex(rootFolderId);
+  const entry = entries.find(e => e.id === id);
+  if (entry) {
+    entry.deleted_at = new Date().toISOString().slice(0, 10);
+    await writeIndex(entries, fileId, rootFolderId);
+  }
+}
+
+// Rimuove deleted_at dall'entry (ripristino dal cestino)
+async function restoreEntry(id, rootFolderId) {
+  const { entries, fileId } = await readIndex(rootFolderId);
+  const entry = entries.find(e => e.id === id);
+  if (entry) {
+    delete entry.deleted_at;
+    await writeIndex(entries, fileId, rootFolderId);
+  }
+}
+
+// Rimuove l'entry dall'indice (eliminazione definitiva)
+async function permanentDeleteEntry(id, rootFolderId) {
+  const { entries, fileId } = await readIndex(rootFolderId);
+  const filtered = entries.filter(e => e.id !== id);
+  await writeIndex(filtered, fileId, rootFolderId);
+}
+
+// Entries attive (non nel cestino)
+function getActiveEntries(entries) {
+  return entries.filter(e => !e.deleted_at);
+}
+
+// Entries nel cestino (eliminate da meno di 30 giorni)
+function getTrashEntries(entries) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  return entries.filter(e => e.deleted_at && e.deleted_at >= cutoffStr);
+}
+
+// Separa le entries da mantenere da quelle scadute (> 30 giorni nel cestino)
+function purgeExpiredTrash(entries) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const toKeep = [];
+  const expired = [];
+  for (const e of entries) {
+    if (e.deleted_at && e.deleted_at < cutoffStr) {
+      expired.push(e);
+    } else {
+      toKeep.push(e);
+    }
+  }
+  return { toKeep, expired };
+}

@@ -66,6 +66,16 @@ async function uploadPdf(pdfArrayBuffer, filename, parentFolderId) {
   return uploaded; // { id, webViewLink }
 }
 
+// Sposta un file nel cestino di Drive
+async function trashDriveFile(fileId) {
+  if (!fileId) return;
+  try {
+    await gapi.client.drive.files.update({ fileId, resource: { trashed: true } });
+  } catch (e) {
+    console.warn('Impossibile spostare il file nel cestino Drive:', e);
+  }
+}
+
 async function getAllCategories(rootId) {
   // Raccoglie tutti i nomi univoci di cartelle categoria da tutte le cartelle mensili
   const monthsRes = await gapi.client.drive.files.list({

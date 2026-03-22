@@ -412,6 +412,46 @@ button:disabled {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   Tab archivio / cestino
+══════════════════════════════════════════════════════════ */
+
+.archive-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem;
+}
+
+.archive-tabs button {
+  padding: 0.6rem;
+  margin: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--radius-xs);
+  font-size: 0.85rem;
+  font-weight: 500;
+  box-shadow: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.archive-tabs button:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+  transform: none;
+  box-shadow: none;
+}
+
+.archive-tabs button.tab-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ═══════════════════════════════════════════════════════════
    Filtri di ricerca
 ══════════════════════════════════════════════════════════ */
 
@@ -516,4 +556,68 @@ button:disabled {
 
 .result-link:hover {
   text-decoration: underline;
+}
+
+/* Intestazione mese/anno */
+.month-heading {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0.5rem 0 0.4rem;
+  margin-top: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.month-heading:first-child {
+  margin-top: 0;
+}
+
+/* Azioni sui risultati (cestino / ripristina) */
+.result-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.result-action-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 0.8rem;
+  line-height: 1;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.result-action-btn:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: none;
+  box-shadow: none;
+}
+
+.result-action-delete:hover:not(:disabled) {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #DC2626;
+}
+
+/* Data scadenza nel cestino */
+.result-expiry {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-style: italic;
 }

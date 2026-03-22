@@ -69,8 +69,11 @@
 
   <!-- VIEW: search -->
   <section id="view-search" class="view" style="display:none">
-    <h2>Archivio</h2>
-    <div class="search-filters">
+    <div class="archive-tabs">
+      <button id="tab-archive" class="tab-active">Archivio</button>
+      <button id="tab-trash">Cestino</button>
+    </div>
+    <div class="search-filters" id="search-filters">
       <input type="text" id="search-text" placeholder="Cerca per descrizione, tag…">
       <select id="search-categoria"><option value="">Tutte le categorie</option></select>
       <div class="filter-row">

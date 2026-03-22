@@ -2,6 +2,11 @@
 
 const GOOGLE_CLIENT_ID = '1072745642634-bvjmub2voji06vb7ptrn1gip0bctbtvd.apps.googleusercontent.com'; // Sostituire con il proprio Client ID OAuth2
 
+// Stato della vista archivio (condiviso tra funzioni)
+let _viewRootId = null;
+let _viewAllEntries = [];
+let _viewIsTrash = false;
+
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
   document.getElementById(id).style.display = 'block';
@@ -257,16 +262,26 @@ async function startSearchView() {
   showView('view-saving');
   setStatus('Caricamento archivio...');
 
-  const rootId = await getRootFolderId();
-  const { entries } = await readIndex(rootId);
+  _viewRootId = await getRootFolderId();
+  const { entries, fileId } = await readIndex(_viewRootId);
 
+  // Elimina silenziosamente le entries scadute dal cestino (> 30 giorni)
+  const { toKeep, expired } = purgeExpiredTrash(entries);
+  if (expired.length > 0) {
+    for (const e of expired) await trashDriveFile(e.drive_file_id);
+    await writeIndex(toKeep, fileId, _viewRootId);
+    _viewAllEntries = toKeep;
+  } else {
+    _viewAllEntries = entries;
+  }
+
+  _viewIsTrash = false;
   showView('view-search');
-  renderSearchResults(entries);
 
-  // Popola il menu a tendina delle categorie
+  // Popola il menu categorie
   const select = document.getElementById('search-categoria');
   select.innerHTML = '<option value="">Tutte le categorie</option>';
-  const cats = [...new Set(entries.map(e => e.categoria))].sort();
+  const cats = [...new Set(getActiveEntries(_viewAllEntries).map(e => e.categoria))].sort();
   cats.forEach(c => {
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c;
@@ -274,14 +289,39 @@ async function startSearchView() {
   });
 
   const filterAndRender = () => {
+    if (_viewIsTrash) {
+      renderSearchResults(getTrashEntries(_viewAllEntries), {
+        isTrash: true,
+        onRestore: handleRestore,
+        onPermanentDelete: handlePermanentDelete,
+      });
+      return;
+    }
     const text = document.getElementById('search-text').value.toLowerCase();
     const cat = document.getElementById('search-categoria').value;
     const from = document.getElementById('search-date-from').value;
     const to = document.getElementById('search-date-to').value;
     const importoMin = document.getElementById('search-importo-min').value;
     const importoMax = document.getElementById('search-importo-max').value;
-    const filtered = filterEntries(entries, { text, cat, from, to, importoMin, importoMax });
-    renderSearchResults(filtered);
+    const active = getActiveEntries(_viewAllEntries);
+    const filtered = filterEntries(active, { text, cat, from, to, importoMin, importoMax });
+    renderSearchResults(filtered, { isTrash: false, onTrash: handleTrash });
+  };
+
+  // Tab archivio / cestino
+  document.getElementById('tab-archive').onclick = () => {
+    _viewIsTrash = false;
+    document.getElementById('tab-archive').classList.add('tab-active');
+    document.getElementById('tab-trash').classList.remove('tab-active');
+    document.getElementById('search-filters').style.display = '';
+    filterAndRender();
+  };
+  document.getElementById('tab-trash').onclick = () => {
+    _viewIsTrash = true;
+    document.getElementById('tab-trash').classList.add('tab-active');
+    document.getElementById('tab-archive').classList.remove('tab-active');
+    document.getElementById('search-filters').style.display = 'none';
+    filterAndRender();
   };
 
   document.getElementById('search-text').oninput = filterAndRender;
@@ -291,4 +331,35 @@ async function startSearchView() {
   document.getElementById('search-importo-min').oninput = filterAndRender;
   document.getElementById('search-importo-max').oninput = filterAndRender;
   document.getElementById('btn-new-session').onclick = () => startCaptureView();
+
+  filterAndRender();
+}
+
+async function handleTrash(id, driveFileId) {
+  const entry = _viewAllEntries.find(e => e.id === id);
+  if (entry) entry.deleted_at = new Date().toISOString().slice(0, 10);
+  await softDeleteEntry(id, _viewRootId);
+  await trashDriveFile(driveFileId);
+  document.getElementById('tab-archive').click();
+}
+
+async function handleRestore(id) {
+  const entry = _viewAllEntries.find(e => e.id === id);
+  if (entry) delete entry.deleted_at;
+  await restoreEntry(id, _viewRootId);
+  document.getElementById('tab-trash').click();
+}
+
+async function handlePermanentDelete(id, driveFileId) {
+  if (!confirm('Eliminare definitivamente questo documento? L\'operazione è irreversibile.')) return;
+  _viewAllEntries = _viewAllEntries.filter(e => e.id !== id);
+  await permanentDeleteEntry(id, _viewRootId);
+  if (driveFileId) {
+    try {
+      await gapi.client.drive.files.delete({ fileId: driveFileId });
+    } catch (e) {
+      console.warn('Eliminazione definitiva da Drive fallita:', e);
+    }
+  }
+  document.getElementById('tab-trash').click();
 }
