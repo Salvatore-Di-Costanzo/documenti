@@ -27,7 +27,7 @@ function filterEntries(entries, { text, cat, from, to, importoMin, importoMax })
 
 // isTrash: true = vista cestino, false = vista archivio
 // callbacks: { onTrash, onRestore, onPermanentDelete }
-function renderSearchResults(entries, { isTrash = false, onTrash, onRestore, onPermanentDelete } = {}) {
+function renderSearchResults(entries, { isTrash = false, onTrash, onRestore, onPermanentDelete, onEdit } = {}) {
   const container = document.getElementById('search-results');
   container.innerHTML = '';
 

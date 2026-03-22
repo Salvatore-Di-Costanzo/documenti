@@ -52,14 +52,17 @@ window.addEventListener('load', async () => {
 
   await initGoogleAuth(GOOGLE_CLIENT_ID);
 
-  // Tenta il login silenzioso (nessun popup se la sessione Google è ancora attiva)
+  // Mostra spinner mentre tenta il login silenzioso
+  showView('view-saving');
+  setStatus('Connessione in corso…');
+
   try {
     await googleLoginSilent();
     await saveUserEmail();
     await startSearchView();
     return;
   } catch (_) {
-    // Sessione scaduta o primo accesso — mostra il pulsante
+    // Sessione scaduta o primo accesso — mostra il pulsante di login
   }
 
   showView('view-setup');
