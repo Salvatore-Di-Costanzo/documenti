@@ -17,6 +17,10 @@ function getPhotos() {
   return _photos.map(p => p.base64);
 }
 
+function getPhotosRaw() {
+  return [..._photos]; // [{id, base64}]
+}
+
 function setOriginalPdf(file) {
   _originalPdf = file;
 }

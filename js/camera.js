@@ -6,7 +6,13 @@ let _torchOn = false;
 async function startCamera() {
   const video = document.getElementById('camera-video');
   try {
-    _stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    _stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: 'environment',
+        width:  { ideal: 3840 },
+        height: { ideal: 2160 },
+      },
+    });
     video.srcObject = _stream;
     return true;
   } catch (err) {

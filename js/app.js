@@ -72,11 +72,21 @@ window.addEventListener('load', async () => {
 });
 
 // ── Vista acquisizione ──────────────────────────────────────────
-async function startCaptureView() {
-  clearSession();
-  document.getElementById('photo-thumbnails').innerHTML = '';
-  document.getElementById('btn-analyze').disabled = true;
+async function startCaptureView(clear = true) {
+  if (clear) {
+    clearSession();
+    document.getElementById('photo-thumbnails').innerHTML = '';
+    document.getElementById('btn-analyze').disabled = true;
+  }
   showView('view-capture');
+
+  // Ripristina le miniature se si torna indietro senza azzerare la sessione
+  if (!clear) {
+    const container = document.getElementById('photo-thumbnails');
+    container.innerHTML = '';
+    getPhotosRaw().forEach(({ id, base64 }) => renderThumbnail(base64, false, id));
+    document.getElementById('btn-analyze').disabled = getPhotosRaw().length === 0;
+  }
 
   const cameraAvailable = await startCamera();
   if (!cameraAvailable) {
@@ -198,6 +208,7 @@ async function startReviewView() {
   }
 
   document.getElementById('btn-save-session').onclick = () => saveSession(rootId, existingCategories);
+  document.getElementById('btn-back-capture').onclick = () => startCaptureView(false);
 }
 
 // Riprova una funzione fino a maxAttempts volte con backoff esponenziale
