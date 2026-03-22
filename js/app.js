@@ -27,6 +27,15 @@ window.addEventListener('load', async () => {
     if (isGoogleSignedIn()) await startSearchView();
   });
 
+  // Configurazione pulsante login (riutilizzato in più percorsi)
+  function setupLoginButton() {
+    document.getElementById('btn-google-login').onclick = async () => {
+      await googleLogin();
+      await saveUserEmail();
+      await startSearchView();
+    };
+  }
+
   if (!hasGeminiKey()) {
     showView('view-setup');
     document.getElementById('btn-save-gemini-key').addEventListener('click', () => {
@@ -36,28 +45,27 @@ window.addEventListener('load', async () => {
       document.getElementById('setup-gemini').style.display = 'none';
       document.getElementById('setup-google').style.display = 'block';
     });
-    document.getElementById('btn-google-login').addEventListener('click', async () => {
-      await initGoogleAuth(GOOGLE_CLIENT_ID);
-      await googleLogin();
-      await startSearchView();
-    });
+    await initGoogleAuth(GOOGLE_CLIENT_ID);
+    setupLoginButton();
     return;
   }
 
   await initGoogleAuth(GOOGLE_CLIENT_ID);
-  if (!isGoogleSignedIn()) {
-    showView('view-setup');
-    document.getElementById('setup-gemini').style.display = 'none';
-    document.getElementById('setup-google').style.display = 'block';
-    document.getElementById('btn-google-login').addEventListener('click', async () => {
-      await googleLogin();
-      await startSearchView();
-    });
+
+  // Tenta il login silenzioso (nessun popup se la sessione Google è ancora attiva)
+  try {
+    await googleLoginSilent();
+    await saveUserEmail();
+    await startSearchView();
     return;
+  } catch (_) {
+    // Sessione scaduta o primo accesso — mostra il pulsante
   }
 
-  await ensureGoogleToken();
-  await startSearchView();
+  showView('view-setup');
+  document.getElementById('setup-gemini').style.display = 'none';
+  document.getElementById('setup-google').style.display = 'block';
+  setupLoginButton();
 });
 
 // ── Vista acquisizione ──────────────────────────────────────────

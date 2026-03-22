@@ -4,6 +4,7 @@
 // Usare Google Identity Services (GIS) per il login, gapi.client per le chiamate API.
 
 const GEMINI_KEY_STORAGE = 'scontrini_gemini_key';
+const USER_EMAIL_KEY = 'scontrini_user_email';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/spreadsheets';
 
 let _googleToken = null; // access token, solo in memoria
@@ -63,7 +64,24 @@ function initTokenClient(clientId, onTokenReceived) {
   });
 }
 
-// Richiede un nuovo token (mostra il popup di consenso Google se necessario)
+// Accesso silenzioso: nessun popup se la sessione Google è ancora attiva
+function googleLoginSilent() {
+  const hint = localStorage.getItem(USER_EMAIL_KEY) || '';
+  return new Promise((resolve, reject) => {
+    _tokenClient.callback = (tokenResponse) => {
+      if (tokenResponse.error) {
+        reject(new Error(tokenResponse.error));
+        return;
+      }
+      _googleToken = tokenResponse.access_token;
+      gapi.client.setToken({ access_token: _googleToken });
+      resolve(_googleToken);
+    };
+    _tokenClient.requestAccessToken({ prompt: '', login_hint: hint });
+  });
+}
+
+// Accesso esplicito (popup Google — richiede gesto utente)
 function googleLogin() {
   return new Promise((resolve, reject) => {
     _tokenClient.callback = (tokenResponse) => {
@@ -75,8 +93,22 @@ function googleLogin() {
       gapi.client.setToken({ access_token: _googleToken });
       resolve(_googleToken);
     };
-    _tokenClient.requestAccessToken({ prompt: '' });
+    _tokenClient.requestAccessToken({ prompt: 'select_account' });
   });
+}
+
+// Salva l'email dell'utente per il silent login futuro
+async function saveUserEmail() {
+  if (!_googleToken) return;
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${_googleToken}` },
+    });
+    const info = await res.json();
+    if (info.email) localStorage.setItem(USER_EMAIL_KEY, info.email);
+  } catch (e) {
+    // Non critico
+  }
 }
 
 function isGoogleSignedIn() {
