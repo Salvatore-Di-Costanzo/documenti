@@ -29,10 +29,18 @@ window.addEventListener('load', async () => {
 
   // Configurazione pulsante login (riutilizzato in più percorsi)
   function setupLoginButton() {
-    document.getElementById('btn-google-login').onclick = async () => {
-      await googleLogin();
-      await saveUserEmail();
-      await startSearchView();
+    const btn = document.getElementById('btn-google-login');
+    const savedEmail = getSavedEmail();
+    if (savedEmail) btn.textContent = `Continua come ${savedEmail}`;
+    btn.onclick = async () => {
+      btn.disabled = true;
+      try {
+        await googleLogin();
+        await saveUserEmail();
+        await startSearchView();
+      } catch (e) {
+        btn.disabled = false;
+      }
     };
   }
 
@@ -308,6 +316,7 @@ async function saveSession(rootId, existingCategories) {
   } catch (err) {
     console.error('Save failed after retries:', err);
     if (err.message?.includes('401') || err.message?.includes('token')) {
+      _clearCachedToken();
       setStatus('Sessione scaduta. Rieffettua il login.');
       setTimeout(() => location.reload(), 2000);
     } else {
