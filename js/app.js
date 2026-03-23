@@ -200,12 +200,14 @@ async function startReviewView() {
   setStatus('Analisi immagini in corso...');
 
   const photos = getPhotos();
-  const analysisResults = await analyzeAllPhotos(photos);
-  const merged = mergeMetadata(analysisResults);
 
-  // Carica le categorie esistenti per i suggerimenti
+  // Carica le categorie esistenti prima dell'analisi per darle a Gemini
   const rootId = await getRootFolderId();
   const existingCategories = await getAllCategories(rootId);
+
+  const analysisResults = await analyzeAllPhotos(photos, existingCategories);
+  const merged = mergeMetadata(analysisResults);
+
   const { resolved, isNew } = resolveCategory(merged.categoria, existingCategories);
 
   showView('view-review');
