@@ -16,7 +16,9 @@ let _tokenClient = null; // client token GIS
 function _loadCachedToken() {
   const token = localStorage.getItem(GOOGLE_TOKEN_KEY);
   const expiry = parseInt(localStorage.getItem(GOOGLE_TOKEN_EXPIRY_KEY) || '0', 10);
-  if (token && Date.now() < expiry - 60_000) return token;
+  const valid = token && Date.now() < expiry - 60_000;
+  console.log('[auth] loadCachedToken:', valid ? 'valido' : 'assente/scaduto', '| expiry:', expiry ? new Date(expiry).toLocaleTimeString() : 'n/a');
+  if (valid) return token;
   return null;
 }
 
@@ -24,6 +26,7 @@ function _cacheToken(tokenResponse) {
   const expiry = Date.now() + (tokenResponse.expires_in || 3600) * 1000;
   localStorage.setItem(GOOGLE_TOKEN_KEY, tokenResponse.access_token);
   localStorage.setItem(GOOGLE_TOKEN_EXPIRY_KEY, String(expiry));
+  console.log('[auth] token cached, scade:', new Date(expiry).toLocaleTimeString(), '| expires_in:', tokenResponse.expires_in);
 }
 
 function _clearCachedToken() {
