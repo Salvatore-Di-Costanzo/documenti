@@ -78,7 +78,10 @@ function capturePhoto() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   canvas.getContext('2d').drawImage(video, 0, 0);
-  return canvas.toDataURL('image/jpeg', 0.85); // JPEG in base64
+  const data = canvas.toDataURL('image/jpeg', 0.85); // JPEG in base64
+  // Spegni la torcia dopo ogni scatto
+  if (_torchOn) setTorch(false);
+  return data;
 }
 
 function fileToBase64(file) {

@@ -131,6 +131,8 @@ async function startCaptureView(clear = true) {
   if (cameraAvailable) {
     document.getElementById('btn-capture').onclick = () => {
       const base64 = capturePhoto();
+      // capturePhoto spegne la torcia — aggiorna lo stato visivo del bottone
+      torchBtn.classList.toggle('torch-on', isTorchOn());
       const id = addPhoto(base64);
       renderThumbnail(base64, false, id);
       document.getElementById('btn-analyze').disabled = false;
