@@ -26,10 +26,6 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  overscroll-behavior-y: none;
-}
-
 body {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   background: var(--bg);
@@ -38,7 +34,6 @@ body {
   max-width: 480px;
   margin: 0 auto;
   -webkit-font-smoothing: antialiased;
-  overscroll-behavior-y: none;
 }
 
 /* ═══════════════════════════════════════════════════════════
